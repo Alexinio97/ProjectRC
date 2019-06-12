@@ -15,23 +15,23 @@
 #define BACKLOG 10
 #define MAX 80
 
-char* serverDir = "/home/alex/ServerDir/";
+char* serverDir = "/home/alan271265/ServerDir/";
 // where the wanted file is stored
 
 
-void send_file(char* filename,int new_fd)
+void send_file(char filename[],int new_fd)
 {
     char full_path[30]={0};
     printf("File is - %s\n",filename);
-    // construct full path to file location
-    strcat(full_path,serverDir);
-    printf("Full path - %s\n",full_path);
-    strcat(full_path,filename);
-    printf("Full command 2- %s\n",full_path);
+    // // construct full path to file location
+    // strcat(full_path,serverDir);
+    // printf("Full path - %s\n",full_path);
+    // strcat(full_path,filename);
+    // printf("Full command 2- %s\n",full_path);
 
+    sprintf(full_path,"%s%s",serverDir,filename); // construct full path using serverDir and the filename received
     printf("Command full is - %s\n",full_path);
-
-
+    
     char ch;
     FILE *file = fopen(full_path,"r");
     if(file == NULL)
@@ -41,10 +41,9 @@ void send_file(char* filename,int new_fd)
     char buffer[100]={0};
     int bytes_read;
     printf("Opened with succes.\n");
-    while (!feof(file)) 
+    while (!feof(file))  
     {
-        
-        if ((bytes_read = fread(&buffer, 1, sizeof(buffer), file)) > 0)
+        if ((bytes_read = fread(&buffer, 1, sizeof(buffer), file)) > 0) // as long as there are bytes to read keep sending them
         {
             send(new_fd, buffer, bytes_read, 0);
             printf("Inside if.\n");
@@ -55,8 +54,6 @@ void send_file(char* filename,int new_fd)
             break;
         }
     }
-    bzero(buffer,sizeof(buffer));
-    recv(new_fd,buffer,sizeof(buffer),0);
     printf("File sent.");
     fclose(file);
 }
@@ -67,7 +64,7 @@ void send_dir_ls(char* command,int new_fd)
     char full_command[26]={0};
     printf("Command is - %s\n",command);
     // adding ls to our full buffer and the server dir
-    strcat(full_command,"ls");
+    strcat(full_command,"ls ");
     printf("Full command - %s\n",full_command);
     strcat(full_command,serverDir);
     printf("Full command 2- %s\n",full_command);
@@ -80,10 +77,10 @@ void send_dir_ls(char* command,int new_fd)
         exit(1);
     }
     char buff[256] = { 0 };
-    while(fgets(buff,256,fp))
+    while(fgets(buff,256,fp)) // read from pipe command  256 bytes at a time
     {
         printf("%s\n",buff);
-        if(send(new_fd,buff,256,0) == -1)
+        if(send(new_fd,buff,256,0) == -1) 
         {
             printf("Error sending data...");
             exit(1);
@@ -94,6 +91,7 @@ void send_dir_ls(char* command,int new_fd)
             break;
         }
     }
+    close(new_fd);
     fclose(fp);
 }
 
@@ -104,7 +102,7 @@ void communicate(int sockfd)
     int n; 
     // infinite loop for chat 
     for (;;) { 
-        bzero(buff, MAX); 
+        bzero(buff, MAX); // reinitialize the buffer , empty it's value
   
         // read the message from client and copy it in buffer 
         recv(sockfd, buff, sizeof(buff),0); 
@@ -116,6 +114,8 @@ void communicate(int sockfd)
             bzero(buff, MAX);
             send_dir_ls("ls",sockfd);
             printf("%s\n",buff);
+            
+            break;
         }
         else if(strcmp(buff,"exit\n")==0)
         {
@@ -124,8 +124,10 @@ void communicate(int sockfd)
         else
         {
             //bzero(buff, MAX);
-            printf("Sending file.\n");          
+            printf("Sending file.\n");
+            strtok(buff,"\n");  // it will write a string terminator when it encounter "\n"        
             send_file(buff,sockfd);
+            break;
         }   
     } 
 }
@@ -188,7 +190,7 @@ int main(void)
         printf("server: conexiune de la: %s\n",inet_ntoa(their_addr.sin_addr));
         printf("Wating for a directory...\n");
         
-        communicate(new_fd);
+        communicate(new_fd); // functions that handles the client requests (ls or filenames)
         close(new_fd);
     }
 

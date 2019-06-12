@@ -58,9 +58,12 @@ void communicate(int sockfd)
             send(sockfd, buff, sizeof(buff),0);
             bzero(buff,sizeof(buff));
             read_ls(sockfd);
+            break; 
+            
         }
         else if(strcmp(buff,"exit\n")==0)
         {
+            send(sockfd,buff,sizeof(buff),0);
             exit(1); //stop the client
         }
         else
@@ -68,7 +71,9 @@ void communicate(int sockfd)
             buff[n]='\0';
             printf("Sending filename first...\n");
             send(sockfd,buff,sizeof(buff),0);
-            receive_file(buff,sockfd); 
+            strtok(buff,"\n"); // it will write a string terminator when it encounter "\n"
+            receive_file(buff,sockfd);
+            break; 
         }
     } 
 } 
@@ -108,6 +113,7 @@ int main(int argc, char *argv[])
     their_addr.sin_addr = *((struct in_addr *)he->h_addr);
     memset(&(their_addr.sin_zero), '\0', 8);
 
+    
     if (connect(sockfd, (struct sockaddr *)&their_addr,
                                             sizeof(struct sockaddr)) == -1) {
         perror("connect");
@@ -120,6 +126,7 @@ int main(int argc, char *argv[])
     // }
     // read all data
     communicate(sockfd);
+    
 
     close(sockfd);
 
