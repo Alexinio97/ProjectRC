@@ -54,6 +54,9 @@ void send_file(char filename[],int new_fd)
             break;
         }
     }
+    bzero(buffer,sizeof(buffer));
+    buffer[0]=0;
+    send(new_fd,buffer,sizeof(buffer),0); // sending 0 will notify the client that all data was sent
     printf("File sent.");
     fclose(file);
 }
@@ -100,7 +103,7 @@ void send_dir_ls(char* command,int new_fd)
     }
     bzero(buff,sizeof(buff));
     buff[0] = 0;
-    send(new_fd,buff,sizeof(buff),0);
+    send(new_fd,buff,sizeof(buff),0); // sending 0 will notify the client that all data was sent
     fclose(fp);
 }
 
@@ -116,13 +119,12 @@ void communicate(int sockfd)
   
         // read the message from client and copy it in buffer
         //printf("Before recv\n");
-        printf("Before recv..\n"); 
         if(recv(sockfd, buff, sizeof(buff),0)==-1)
         {
             perror("Failed to receive: ");
             
         }
-        printf("After recv...\n");
+
         //printf("After recv..\n"); 
         // print buffer which contains the client contents 
         //printf("From client: %s\n", buff); 
@@ -211,7 +213,7 @@ int main(void)
             continue;
         }
         printf("server: conexiune de la: %s\n",inet_ntoa(their_addr.sin_addr));
-        printf("Wating for a directory...\n");
+        printf("Wating for a command...\n");
         
         communicate(new_fd); // functions that handles the client requests (ls or filenames)
         close(new_fd);

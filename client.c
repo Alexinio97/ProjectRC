@@ -21,12 +21,12 @@ void receive_file(char* filename,int sockfd)
     int numbytes;
     //TODO: file handling in case that the file doesn't exist
     FILE *receivedFile = fopen(filename,"w"); // open a new file with the same name as the one on the server
-    while(numbytes=recv(sockfd,buffer,sizeof(buffer)+1,0)!=0)
+    while(buffer[0]!=0)
     {
+        numbytes=recv(sockfd,buffer,sizeof(buffer)+1,0);
         fprintf(receivedFile,buffer);
     }
-    send(sockfd,"File received!\n",17,0);
-
+    printf("File received!\n");
     fclose(receivedFile);
 }
 
@@ -52,7 +52,7 @@ void communicate(int sockfd)
     int exit = 0; 
     do{ 
         bzero(buff, sizeof(buff));  // here will be the wanted file
-        printf("Enter file name(ls first to see the files): "); 
+        printf("Enter command: "); 
         n = 0; 
         
         while ((buff[n++] = getchar()) != '\n') 
@@ -90,6 +90,7 @@ void communicate(int sockfd)
         }
     }while(exit==0); 
 } 
+
 int main(int argc, char *argv[])
 {
     int sockfd;
@@ -138,6 +139,12 @@ int main(int argc, char *argv[])
     //     exit(1);
     // }
     // read all data
+    printf("--------------------\n");
+    printf("Application usage:\n");
+    printf("For listing the directory use - ls \n");
+    printf("For downloading a file use get filename \n");
+    printf("For exit type - exit\n");
+    printf("------------------\n");
     communicate(sockfd);
     
 
