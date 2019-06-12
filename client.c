@@ -19,6 +19,7 @@ void receive_file(char* filename,int sockfd)
 {
     char buffer[50];
     int numbytes;
+    //TODO: file handling in case that the file doesn't exist
     FILE *receivedFile = fopen(filename,"w"); // open a new file with the same name as the one on the server
     while(numbytes=recv(sockfd,buffer,sizeof(buffer)+1,0)!=0)
     {
@@ -34,48 +35,60 @@ void read_ls(int sockfd)
 {
     int  numbytes;
     char buf[256];
-    while((numbytes=recv(sockfd,buf,256,0)!=0))
+    while(buf[0]!=0)
     {
+        numbytes=recv(sockfd,buf,256,0);
         printf("%s\n",buf);
         //strcat(command_received,buf);
     }
+
 }
 
 // function for communication between server and client
 void communicate(int sockfd) 
 { 
     char buff[MAX]; 
-    int n; 
-    for (;;) { 
+    int n;
+    int exit = 0; 
+    do{ 
         bzero(buff, sizeof(buff));  // here will be the wanted file
         printf("Enter file name(ls first to see the files): "); 
         n = 0; 
+        
         while ((buff[n++] = getchar()) != '\n') 
             ;
+        char *pointerFile;
+        pointerFile = strtok(buff," "); // split the char array after buff
         if(strcmp(buff,"ls\n")==0)
         {
             printf("Sending ls...\n");
             send(sockfd, buff, sizeof(buff),0);
             bzero(buff,sizeof(buff));
             read_ls(sockfd);
-            break; 
+            //break; 
             
         }
         else if(strcmp(buff,"exit\n")==0)
         {
             send(sockfd,buff,sizeof(buff),0);
-            exit(1); //stop the client
+            exit=1;
         }
-        else
+        else if(strcmp(buff,"get")==0)
         {
-            buff[n]='\0';
+            pointerFile = strtok(NULL,""); // get the other half of the array which is the file name
             printf("Sending filename first...\n");
+            strcpy(buff,pointerFile); // place the file name inside buffer
+            printf("Filename is - %s\n",buff);
             send(sockfd,buff,sizeof(buff),0);
             strtok(buff,"\n"); // it will write a string terminator when it encounter "\n"
             receive_file(buff,sockfd);
-            break; 
+           // break; 
         }
-    } 
+        else
+        {
+            printf("Invalid command, try again...ls,get file or exit\n");
+        }
+    }while(exit==0); 
 } 
 int main(int argc, char *argv[])
 {
@@ -110,7 +123,7 @@ int main(int argc, char *argv[])
 
     their_addr.sin_family = AF_INET;
     their_addr.sin_port = htons(PORT);
-    their_addr.sin_addr = *((struct in_addr *)he->h_addr);
+    their_addr.sin_addr = *((struct in_addr *)he->h_addr_list[0]);
     memset(&(their_addr.sin_zero), '\0', 8);
 
     

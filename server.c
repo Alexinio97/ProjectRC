@@ -15,7 +15,7 @@
 #define BACKLOG 10
 #define MAX 80
 
-char* serverDir = "/home/alan271265/ServerDir/";
+char* serverDir = "/home/alex/ServerDir/";
 // where the wanted file is stored
 
 
@@ -77,9 +77,14 @@ void send_dir_ls(char* command,int new_fd)
         exit(1);
     }
     char buff[256] = { 0 };
+    int s= 256;
     while(fgets(buff,256,fp)) // read from pipe command  256 bytes at a time
     {
+        
         printf("%s\n",buff);
+        
+         // seding the number of files first
+
         if(send(new_fd,buff,256,0) == -1) 
         {
             printf("Error sending data...");
@@ -90,8 +95,12 @@ void send_dir_ls(char* command,int new_fd)
             printf("End of file...");
             break;
         }
+        printf("Still reading file...\n");
+        
     }
-    close(new_fd);
+    bzero(buff,sizeof(buff));
+    buff[0] = 0;
+    send(new_fd,buff,sizeof(buff),0);
     fclose(fp);
 }
 
@@ -99,37 +108,51 @@ void send_dir_ls(char* command,int new_fd)
 void communicate(int sockfd) 
 { 
     char buff[MAX]; 
-    int n; 
+    int n;
+    int exit = 0; 
     // infinite loop for chat 
-    for (;;) { 
+    do{ 
         bzero(buff, MAX); // reinitialize the buffer , empty it's value
   
-        // read the message from client and copy it in buffer 
-        recv(sockfd, buff, sizeof(buff),0); 
+        // read the message from client and copy it in buffer
+        //printf("Before recv\n");
+        printf("Before recv..\n"); 
+        if(recv(sockfd, buff, sizeof(buff),0)==-1)
+        {
+            perror("Failed to receive: ");
+            
+        }
+        printf("After recv...\n");
+        //printf("After recv..\n"); 
         // print buffer which contains the client contents 
-        printf("From client: %s\n", buff); 
+        //printf("From client: %s\n", buff); 
         
         if(strcmp(buff,"ls\n")==0)
         {
+            printf("From client: %s\n", buff);
             bzero(buff, MAX);
             send_dir_ls("ls",sockfd);
             printf("%s\n",buff);
             
-            break;
+            //break;
         }
         else if(strcmp(buff,"exit\n")==0)
         {
-            exit(1); //stop the server
+            printf("From client: %s\n", buff);
+            printf("Client disconnected...\n");
+            exit=1;
+            //break;
         }
-        else
+        else if(strcmp(buff,"")!=0)
         {
+            printf("From client: %s\n", buff);
             //bzero(buff, MAX);
             printf("Sending file.\n");
             strtok(buff,"\n");  // it will write a string terminator when it encounter "\n"        
             send_file(buff,sockfd);
-            break;
+            //break;
         }   
-    } 
+    }while(exit==0); 
 }
 
 
