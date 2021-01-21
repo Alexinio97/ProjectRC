@@ -1,2 +1,2 @@
 # ProjectRC
-A project for school(retele de calculatoare).
+A project for school(desktop network).
